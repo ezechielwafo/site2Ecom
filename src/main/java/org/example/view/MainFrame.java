@@ -15,6 +15,9 @@ public class MainFrame extends JFrame implements ViewManager {
     private JTable tableArticles;
     private DefaultTableModel tableModel;
     private JLabel statusLabel;
+    private JButton btnAjouter;
+    private JButton btnSupprimer;
+
 
     public MainFrame() {
         // Configuration de base (Etape 1 du TP)
@@ -72,10 +75,11 @@ public class MainFrame extends JFrame implements ViewManager {
     private void initControlPanel() {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-        JButton btnAjouter = new JButton("Ajouter Article");
-        btnAjouter.addActionListener(e -> showArticleEditor(null)); // null = création
+        // CORRECT : On utilise les variables de la classe, on ne met pas "JButton" devant
+        btnAjouter = new JButton("Ajouter Article");
+        btnAjouter.addActionListener(e -> showArticleEditor(null));
 
-        JButton btnSupprimer = new JButton("Supprimer Sélection");
+        btnSupprimer = new JButton("Supprimer Sélection");
         btnSupprimer.addActionListener(e -> {
             int row = tableArticles.getSelectedRow();
             if (row != -1) {
@@ -90,7 +94,6 @@ public class MainFrame extends JFrame implements ViewManager {
         panel.add(btnSupprimer);
         add(panel, BorderLayout.NORTH);
     }
-
     // --- Implémentation de l'interface ViewManager ---
 
     @Override
@@ -126,8 +129,15 @@ public class MainFrame extends JFrame implements ViewManager {
 
     @Override
     public void showLoginScreen() {
-        // On créera une JDialog pour le login plus tard
-        System.out.println("Affichage écran login...");
+        LoginDialog loginDlg = new LoginDialog(this);
+        loginDlg.setVisible(true); // Bloque l'exécution ici tant que la boîte est ouverte
+
+        if (loginDlg.isSucceeded()) {
+            // Envoie les données saisies au contrôleur
+            controller.handleLogin(loginDlg.getLogin(), loginDlg.getPassword());
+        } else {
+            System.exit(0); // Ferme l'appli si on annule le login
+        }
     }
 
     @Override
@@ -141,6 +151,17 @@ public class MainFrame extends JFrame implements ViewManager {
 
     @Override
     public void loginSuccess(Utilisateur user) {
-        statusLabel.setText(" Connecté en tant que : " + user.getLogin() + (user.isAdmin() ? " (Admin)" : ""));
+        statusLabel.setText(" Connecté : " + user.getLogin());
+
+        // CONDITION DE SÉCURITÉ : cacher les boutons si pas admin
+        if (!user.isAdmin()) {
+            btnAjouter.setVisible(false);
+            btnSupprimer.setVisible(false);
+            statusLabel.setText(statusLabel.getText() + " (Mode Consultation)");
+        } else {
+            btnAjouter.setVisible(true);
+            btnSupprimer.setVisible(true);
+            statusLabel.setText(statusLabel.getText() + " (Mode Admin)");
+        }
     }
 }
