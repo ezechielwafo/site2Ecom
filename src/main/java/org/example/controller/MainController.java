@@ -2,6 +2,7 @@ package org.example.controller;
 
 import org.example.Model.auth.AuthenticatorTemplate;
 import org.example.Model.auth.MemoireAuthenticator;
+import org.example.Model.auth.PropertiesAuthenticator;
 import org.example.Model.domain.Article;
 import org.example.Model.domain.Utilisateur;
 import org.example.Model.persistance.ArticleDAO;
@@ -23,8 +24,11 @@ public class MainController {
         // Initialisation croisée
         this.view.setController(this);
 
-        // On définit l'authentificateur par défaut (Mémoire pour l'instant)
-        this.setAuthenticator(new MemoireAuthenticator());
+        // TEST 1 : Authentification en mémoire
+        // this.setAuthenticator(new MemoireAuthenticator());
+
+        // TEST 2 : Authentification par fichier Properties (Contrainte du TP)
+        this.setAuthenticator(new PropertiesAuthenticator());
 
         // On lance l'IHM et on demande le login
         this.view.startApplication();
