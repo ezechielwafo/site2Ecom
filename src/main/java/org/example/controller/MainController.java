@@ -1,7 +1,6 @@
 package org.example.controller;
 
 import org.example.Model.auth.AuthenticatorTemplate;
-import org.example.Model.auth.MemoireAuthenticator;
 import org.example.Model.auth.PropertiesAuthenticator;
 import org.example.Model.domain.Article;
 import org.example.Model.domain.Utilisateur;
@@ -24,10 +23,7 @@ public class MainController {
         // Initialisation croisée
         this.view.setController(this);
 
-        // TEST 1 : Authentification en mémoire
-        // this.setAuthenticator(new MemoireAuthenticator());
-
-        // TEST 2 : Authentification par fichier Properties (Contrainte du TP)
+        // Authentification par fichier Properties (Contrainte du TP)
         this.setAuthenticator(new PropertiesAuthenticator());
 
         // On lance l'IHM et on demande le login
@@ -41,7 +37,6 @@ public class MainController {
 
     // --- AUTHENTIFICATION ---
     public void handleLogin(String login, String password) {
-        // On utilise UNIQUEMENT le Template Method ici
         Utilisateur user = authenticator.login(login, password);
 
         if (user != null) {
@@ -51,7 +46,6 @@ public class MainController {
             refreshArticleList();
         } else {
             view.showMessage("Login ou mot de passe incorrect.", "Erreur d'authentification", JOptionPane.ERROR_MESSAGE);
-            // On redemande le login si échec
             view.showLoginScreen();
         }
     }
@@ -69,7 +63,6 @@ public class MainController {
 
         Article newArticle = new Article(nom, desc, prix, stock);
         articleDAO.create(newArticle);
-        articleDAO.saveAll(); // Persistance binaire
         refreshArticleList();
     }
 
@@ -80,11 +73,40 @@ public class MainController {
         }
 
         if (articleDAO.delete(id)) {
-            articleDAO.saveAll();
             refreshArticleList();
             view.showMessage("Article supprimé.", "Succès", JOptionPane.INFORMATION_MESSAGE);
         } else {
             view.showMessage("Article introuvable.", "Erreur", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // --- MODIFICATION (UPDATE du CRUD) ---
+
+    // Étape A : On récupère l'objet et on demande à la vue d'ouvrir l'éditeur pré-rempli
+    public void requestEditArticle(long id) {
+        Article a = articleDAO.findById(id);
+        if (a != null) {
+            view.showArticleEditor(a);
+        }
+    }
+
+    // Étape B : On enregistre les modifications envoyées par la JDialog
+    public void handleUpdateArticle(long id, String nom, String desc, double prix, int stock) {
+        if (currentUser == null || !currentUser.isAdmin()) {
+            view.showMessage("Action non autorisée.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        Article a = articleDAO.findById(id);
+        if (a != null) {
+            a.setNom(nom);
+            a.setDescription(desc);
+            a.setPrix(prix);
+            a.setQuantiteStock(stock); // Correction du nom de la méthode
+
+            articleDAO.update(a); // Sauvegarde et sérialisation
+            refreshArticleList(); // Mise à jour du JTable
+            view.showMessage("Article " + id + " mis à jour !", "Succès", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
